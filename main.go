@@ -5,8 +5,6 @@ import (
 	"os"
 
 	"github.com/spf13/afero"
-
-	"github.com/alecaivazis/run"
 )
 
 func main() {
@@ -18,7 +16,7 @@ func main() {
 	}
 
 	// load the current configuration from the filesystem
-	config, err := run.LoadConfig(afero.NewOsFs(), cwd)
+	config, err := LoadConfig(afero.NewOsFs(), cwd)
 	if err != nil {
 		fmt.Printf("Sorry, there was a problem: %s.\n", err.Error())
 		os.Exit(1)

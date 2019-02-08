@@ -8,11 +8,7 @@ task "build" {
 
 task "foo" {
     description = "description with variable: {% .hello %} "
-    // these get executed in parallel
-    commands = [
-        "echo 1",
-        "echo 2",
-    ]
+    command = "echo 2"
 }
 
 task "bar" {
@@ -26,9 +22,6 @@ task "bar" {
 
 variables {
     hello = "hello"
-    bar {
-        bar = "baz"
-    }
 }
 
 config {

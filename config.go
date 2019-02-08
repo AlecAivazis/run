@@ -1,15 +1,80 @@
 package run
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"path"
+	"text/template"
 
 	"github.com/hashicorp/hcl"
 	"github.com/spf13/afero"
+	"github.com/spf13/cobra"
 )
 
 // TaskFileName is the name of the file that defines run's tasks
 const TaskFileName = "_tasks.hcl"
+
+// Executable is the internal interface for something that can act as the main entry point for run
+type Executable interface {
+	Execute() error
+}
+
+// Config holds the entire configuration for a project
+type Config struct {
+	Tasks     map[string]*Task `hcl:"task"`
+	Variables map[string]interface{}
+	Settings  struct {
+		TemplateDelimiters []string `hcl:"delimiters"`
+	} `hcl:"config"`
+}
+
+// Cmd turns the config into a
+func (c *Config) Cmd() (Executable, error) {
+	// the delimiters to use for our templates
+	delimiters := []string{"{{", "}}"}
+	if len(c.Settings.TemplateDelimiters) != 0 {
+		delimiters = c.Settings.TemplateDelimiters
+	}
+
+	// at the moment, run wraps over afero/cobra so let's create a root command
+	cmd := &cobra.Command{
+		Use: "run",
+	}
+
+	// each task in the config represents a command to cobra
+	for taskName, task := range c.Tasks {
+		// save the name of the task
+		task.Name = taskName
+
+		// the description of the task can have variables
+		tmpl, err := template.New("task-description").Delims(delimiters[0], delimiters[1]).Parse(task.Description)
+		if err != nil {
+			return nil, err
+		}
+		var description bytes.Buffer
+		tmpl.Execute(&description, c.Variables)
+
+		// create a sub command to pass to cobra
+		subCmd := func(task *Task) *cobra.Command {
+			return &cobra.Command{
+				Use:   taskName,
+				Short: string(description.Bytes()),
+				Run: func(cmd *cobra.Command, args []string) {
+					if err := task.Run(cmd, args); err != nil {
+						fmt.Printf("Sorry something went wrong: %s\n", err.Error())
+					}
+				},
+			}
+		}(task)
+
+		// add the sub command to the root
+		cmd.AddCommand(subCmd)
+	}
+
+	// return the result
+	return cmd, nil
+}
 
 // LoadConfig takes a filesystem and loads the appropriate configuration file by walking up from
 // the current working directory until it finds a taskfile

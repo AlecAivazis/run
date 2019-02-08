@@ -21,10 +21,10 @@ task "bar" {
 }
 
 variables {
-    hello = "helloa"
+    hello = "hello"
 }
 
 config {
     // we can even change the delimiter that our templates use
-    delimiters = ["{%", "%}"]
+    delAimiters = ["{%", "%}"]
 }

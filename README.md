@@ -3,7 +3,7 @@
 A task runner with templates and hcl for configuration
 
 ```hcl
-// this file represents a possible alternative format for the task file
+// inside of _tasks.hcl
 
 task "build" {
     description = "this is the description for the build task"

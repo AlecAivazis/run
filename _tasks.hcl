@@ -8,7 +8,7 @@ task "build" {
 
 task "foo" {
     description = "description with variable: {% .hello %} "
-    command = "echo 2"
+    command = "echo {% .hello %}"
 }
 
 task "bar" {
@@ -21,7 +21,7 @@ task "bar" {
 }
 
 variables {
-    hello = "hello"
+    hello = "helloa"
 }
 
 config {

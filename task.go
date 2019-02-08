@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
-
-	"github.com/spf13/cobra"
+	"text/template"
 )
 
 // Task represents a single task that can be executed by run
@@ -17,7 +17,7 @@ type Task struct {
 }
 
 // Run executes the task
-func (t *Task) Run(cmd *cobra.Command, args []string) error {
+func (t *Task) Run(args []string, c *Config) error {
 	// make sure there is only one way to run the given task
 	waysToRun := 0
 	if t.Script != "" {
@@ -32,25 +32,33 @@ func (t *Task) Run(cmd *cobra.Command, args []string) error {
 
 	// we are safe to run the command
 	if t.Script != "" {
-		return t.runScript(cmd, args)
+		return t.runScript(args, c)
 	}
-	return t.runPipeline(cmd, args)
+	return t.runPipeline(args, c)
 }
 
-func (t *Task) runScript(cmd *cobra.Command, args []string) error {
+func (t *Task) runScript(args []string, c *Config) error {
 	// create a com
-	return t.execute(args, t.Script)
+	return t.execute(args, c, t.Script)
 }
 
-func (t *Task) runPipeline(cmd *cobra.Command, args []string) error {
-	return t.execute(args, t.Pipeline...)
+func (t *Task) runPipeline(args []string, c *Config) error {
+	return t.execute(args, c, t.Pipeline...)
 }
 
-func (t *Task) execute(arguments []string, cmds ...string) error {
+func (t *Task) execute(arguments []string, c *Config, cmds ...string) error {
 	// for each command we have to run
 	for _, command := range cmds {
+		// the command could be a template string
+		tmpl, err := template.New("task-command").Delims(c.Settings.TemplateDelimiters[0], c.Settings.TemplateDelimiters[1]).Parse(command)
+		if err != nil {
+			return err
+		}
+		var cmdStr bytes.Buffer
+		tmpl.Execute(&cmdStr, c.Variables)
+
 		// build up the command
-		args := append([]string{"-c", command, "sh"}, arguments...)
+		args := append([]string{"-c", string(cmdStr.Bytes()), "sh"}, arguments...)
 		cmd := exec.Command("sh", args...)
 
 		// make sure the command prints to the right spots

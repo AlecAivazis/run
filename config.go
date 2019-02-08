@@ -32,9 +32,8 @@ type Config struct {
 // Cmd turns the config into a
 func (c *Config) Cmd() (Executable, error) {
 	// the delimiters to use for our templates
-	delimiters := []string{"{{", "}}"}
-	if len(c.Settings.TemplateDelimiters) != 0 {
-		delimiters = c.Settings.TemplateDelimiters
+	if len(c.Settings.TemplateDelimiters) == 0 {
+		c.Settings.TemplateDelimiters = []string{"{{", "}}"}
 	}
 
 	// at the moment, run wraps over afero/cobra so let's create a root command
@@ -48,7 +47,7 @@ func (c *Config) Cmd() (Executable, error) {
 		task.Name = taskName
 
 		// the description of the task can have variables
-		tmpl, err := template.New("task-description").Delims(delimiters[0], delimiters[1]).Parse(task.Description)
+		tmpl, err := template.New("task-description").Delims(c.Settings.TemplateDelimiters[0], c.Settings.TemplateDelimiters[1]).Parse(task.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +60,7 @@ func (c *Config) Cmd() (Executable, error) {
 				Use:   taskName,
 				Short: string(description.Bytes()),
 				Run: func(cmd *cobra.Command, args []string) {
-					if err := task.Run(cmd, args); err != nil {
+					if err := task.Run(args, c); err != nil {
 						fmt.Printf("Sorry something went wrong: %s\n", err.Error())
 					}
 				},

@@ -31,7 +31,7 @@ variables {
 
 config {
     // we can even change the delimiter that our templates use
-    delAimiters = ["{%", "%}"]
+    delimiters = ["{%", "%}"]
 }
 ```
 

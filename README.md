@@ -30,7 +30,7 @@ variables {
 }
 
 config {
-    // we can even change the delimiter that our templates use
+    // you can change the delimiter that the templates use. Default is ["{{", "}}"]
     delimiters = ["{%", "%}"]
 }
 ```

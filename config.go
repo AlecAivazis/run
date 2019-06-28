@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"text/template"
 
@@ -62,6 +63,8 @@ func (c *Config) Cmd() (Executable, error) {
 				Run: func(cmd *cobra.Command, args []string) {
 					if err := task.Run(args, c); err != nil {
 						fmt.Printf("Sorry something went wrong: %s\n", err.Error())
+						os.Exit(1)
+						return
 					}
 				},
 			}

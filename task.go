@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"text/template"
+
+	"github.com/spf13/cobra"
 )
 
 // Task represents a single task that can be executed by run
@@ -73,4 +75,18 @@ func (t *Task) execute(arguments []string, c *Config, cmds ...string) error {
 		}
 	}
 	return nil
+}
+
+func (t *Task) CobraCommand(config *Config) *cobra.Command {
+	return &cobra.Command{
+		Use:   t.Name,
+		Short: t.Description,
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := t.Run(args, config); err != nil {
+				fmt.Printf("Sorry something went wrong: %s\n", err.Error())
+				os.Exit(1)
+				return
+			}
+		},
+	}
 }

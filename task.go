@@ -61,7 +61,7 @@ func (t *Task) execute(arguments []string, c *Config, cmds ...string) error {
 
 		// build up the command
 		args := append([]string{"-c", string(cmdStr.Bytes()), "sh"}, arguments...)
-		cmd := exec.Command("sh", args...)
+		cmd := exec.Command("bash", args...)
 
 		// make sure the command prints to the right spots
 		cmd.Stdin = os.Stdin

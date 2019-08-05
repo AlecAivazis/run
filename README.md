@@ -23,6 +23,10 @@ task "bar" {
         "echo 1",
         "echo 2",
     ]
+    // set these environment variables for the command/pipeline
+    environment {
+        KEY = "value"
+    }
 }
 
 variables {

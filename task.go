@@ -16,6 +16,7 @@ type Task struct {
 	Description string
 	Script      string `hcl:"command"`
 	Pipeline    []string
+	Environment map[string]string
 }
 
 // Run executes the task
@@ -62,6 +63,14 @@ func (t *Task) execute(arguments []string, c *Config, cmds ...string) error {
 		// build up the command
 		args := append([]string{"-c", string(cmdStr.Bytes()), "sh"}, arguments...)
 		cmd := exec.Command("bash", args...)
+
+		// starting with the current set of environment variables
+		cmd.Env = os.Environ()
+
+		// add any environment variables to the command
+		for key, value := range t.Environment {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
+		}
 
 		// make sure the command prints to the right spots
 		cmd.Stdin = os.Stdin

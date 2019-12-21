@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/afero"
 )
 
@@ -21,6 +23,9 @@ func main() {
 		fmt.Printf("Sorry, there was a problem: %s.\n", err.Error())
 		os.Exit(1)
 	}
+
+	// load any environment files that are in the same directory as the taskfile
+	_ = godotenv.Load(path.Join(config.rootDir, ".env"))
 
 	// convert the configuration into a command we can execute
 	cmd, err := config.Cmd()

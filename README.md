@@ -1,6 +1,6 @@
 # run
 
-A task runner with templates and hcl for configuration
+A task runner with templates and hcl for configuration.
 
 ```hcl
 // inside of _tasks.hcl
@@ -23,6 +23,10 @@ task "bar" {
         "echo 1",
         "echo 2",
     ]
+    // set these environment variables for the command/pipeline
+    environment {
+        KEY = "value"
+    }
 }
 
 variables {
@@ -43,3 +47,12 @@ Installing `run` is easily done with `go get`:
 $ go get github.com/alecaivazis/run
 ```
 
+## Script Definitions
+
+As shown in the example above, scripts and various configuration for `run` is defined in a
+file called `_tasks.hcl`. This was designed with the go community in mind which lacks a built in
+script-runners in its build tooling. In order to smoothen the experience when
+working with different languages, `run` can get script definitions from other places too!
+
+For example, run will look at the `package.json` file in a node project for additional script definitions.
+You can still use `_tasks.hcl` aswell if you want.

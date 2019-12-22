@@ -7,3 +7,5 @@ require (
 	github.com/spf13/cobra v0.0.5
 	golang.org/x/text v0.3.2 // indirect
 )
+
+replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0

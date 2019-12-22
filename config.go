@@ -116,7 +116,7 @@ func LoadConfig(fs afero.Fs, dir string) (*Config, error) {
 
 		// parse the contents as hcl and use that as the starting point for
 		// language-specific configuration
-		err = hcl.Decode(result, string(contents))
+		err = hcl.Unmarshal(contents, result)
 		if err != nil {
 			return nil, err
 		}

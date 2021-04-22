@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"path"
 	"text/template"
 
-	"github.com/hashicorp/hcl"
+	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
@@ -23,11 +24,11 @@ type Executable interface {
 
 // Config holds the entire configuration for a project
 type Config struct {
-	Tasks     map[string]*Task `hcl:"task"`
-	Variables map[string]interface{}
-	Settings  struct {
+	Tasks     []Task            `hcl:"task,block"`
+	Variables map[string]string `hcl:"variables,optional"`
+	Config    struct {
 		TemplateDelimiters []string `hcl:"delimiters"`
-	} `hcl:"config"`
+	} `hcl:"config,optional"`
 
 	rootDir string
 	fs      afero.Fs
@@ -36,8 +37,8 @@ type Config struct {
 // Cmd turns the config into an Executable
 func (c *Config) Cmd() (Executable, error) {
 	// the delimiters to use for our templates
-	if len(c.Settings.TemplateDelimiters) == 0 {
-		c.Settings.TemplateDelimiters = []string{"{{", "}}"}
+	if len(c.Config.TemplateDelimiters) == 0 {
+		c.Config.TemplateDelimiters = []string{"{{", "}}"}
 	}
 
 	// at the moment, run wraps over afero/cobra so let's create a root command
@@ -46,12 +47,9 @@ func (c *Config) Cmd() (Executable, error) {
 	}
 
 	// each task in the config represents a command to cobra
-	for taskName, task := range c.Tasks {
-		// save the name of the task
-		task.Name = taskName
-
+	for _, task := range c.Tasks {
 		// the description of the task can have variables
-		tmpl, err := template.New("task-description").Delims(c.Settings.TemplateDelimiters[0], c.Settings.TemplateDelimiters[1]).Parse(task.Description)
+		tmpl, err := template.New("task-description").Delims(c.Config.TemplateDelimiters[0], c.Config.TemplateDelimiters[1]).Parse(task.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +57,7 @@ func (c *Config) Cmd() (Executable, error) {
 		tmpl.Execute(&description, c.Variables)
 
 		// create a sub command to pass to cobra
-		subCmd := func(task *Task) *cobra.Command {
+		subCmd := func(task Task) *cobra.Command {
 			return task.CobraCommand(c)
 		}(task)
 
@@ -103,22 +101,13 @@ func LoadConfig(fs afero.Fs, dir string) (*Config, error) {
 	result := &Config{
 		rootDir: dir,
 		fs:      fs,
-		Tasks:   map[string]*Task{},
 	}
 
 	// if we have a task file
 	if taskFileExists {
-		// read its contents
-		contents, err := afero.ReadFile(fs, taskFilePath)
+		err := hclsimple.DecodeFile(taskFilePath, nil, result)
 		if err != nil {
-			return nil, err
-		}
-
-		// parse the contents as hcl and use that as the starting point for
-		// language-specific configuration
-		err = hcl.Unmarshal(contents, result)
-		if err != nil {
-			return nil, err
+			log.Fatalf("Failed to load configuration: %s", err)
 		}
 	}
 
@@ -136,11 +125,11 @@ func LoadConfig(fs afero.Fs, dir string) (*Config, error) {
 
 		for scriptName := range packageJSON.Scripts {
 			// add a task to the config
-			result.Tasks[scriptName] = &Task{
+			result.Tasks = append(result.Tasks, Task{
 				Name:        scriptName,
 				Description: "<none>",
 				Script:      fmt.Sprintf("npm run %s", scriptName),
-			}
+			})
 		}
 	}
 

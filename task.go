@@ -12,11 +12,11 @@ import (
 
 // Task represents a single task that can be executed by run
 type Task struct {
-	Name        string
-	Description string
-	Script      string `hcl:"command"`
-	Pipeline    []string
-	Environment map[string]string
+	Name        string            `hcl:"name,label"`
+	Description string            `hcl:"description"`
+	Script      string            `hcl:"command,optional"`
+	Pipeline    []string          `hcl:"pipeline,optional"`
+	Environment map[string]string `hcl:"environment,optional"`
 }
 
 // Run executes the task
@@ -53,7 +53,7 @@ func (t *Task) execute(arguments []string, c *Config, cmds ...string) error {
 	// for each command we have to run
 	for _, command := range cmds {
 		// the command could be a template string
-		tmpl, err := template.New("task-command").Delims(c.Settings.TemplateDelimiters[0], c.Settings.TemplateDelimiters[1]).Parse(command)
+		tmpl, err := template.New("task-command").Delims(c.Config.TemplateDelimiters[0], c.Config.TemplateDelimiters[1]).Parse(command)
 		if err != nil {
 			return err
 		}

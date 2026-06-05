@@ -26,6 +26,12 @@ func main() {
 		_ = godotenv.Load(path.Join(config.rootDir, ".env"))
 	}
 
+	// cobra's __complete handler requires at least one arg; zsh doesn't always
+	// provide the empty current word, so add it when missing
+	if len(os.Args) == 2 && (os.Args[1] == "__complete" || os.Args[1] == "__completeNoDesc") {
+		os.Args = append(os.Args, "")
+	}
+
 	cmd, err := config.Cmd()
 	if err != nil {
 		fmt.Printf("Sorry, there was a problem: %s.\n", err.Error())

@@ -88,8 +88,9 @@ func (t *Task) execute(arguments []string, c *Config, cmds ...string) error {
 
 func (t *Task) CobraCommand(config *Config) *cobra.Command {
 	return &cobra.Command{
-		Use:   t.Name,
-		Short: t.Description,
+		Use:                t.Name,
+		Short:              t.Description,
+		DisableFlagParsing: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := t.Run(args, config); err != nil {
 				fmt.Printf("Sorry something went wrong: %s\n", err.Error())

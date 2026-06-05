@@ -123,12 +123,19 @@ func LoadConfig(fs afero.Fs, dir string) (*Config, error) {
 		}
 		json.Unmarshal(contents, &packageJSON)
 
+		packageManager := "npm"
+		if _, err := fs.Stat(path.Join(dir, "pnpm-lock.yaml")); err == nil {
+			packageManager = "pnpm"
+		} else if _, err := fs.Stat(path.Join(dir, "yarn.lock")); err == nil {
+			packageManager = "yarn"
+		}
+
 		for scriptName := range packageJSON.Scripts {
 			// add a task to the config
 			result.Tasks = append(result.Tasks, Task{
 				Name:        scriptName,
 				Description: "<none>",
-				Script:      fmt.Sprintf("npm run %s", scriptName),
+				Script:      fmt.Sprintf(`%s run %s -- "$@"`, packageManager, scriptName),
 			})
 		}
 	}
